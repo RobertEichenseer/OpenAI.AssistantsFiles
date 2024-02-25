@@ -27,6 +27,10 @@ Tools enable the extension of the language model's capabilities with custom func
 
 ## Repo Content
 
+The provided source uses the [REST Client VSCode extension](https://github.com/Huachao/vscode-restclient) to execute and process return values from the Assistants API. Please install the extension for eas of reproducing and reading.
+
+![Demo Source](./media/img/00_DemoSource.png)
+
 The provided [End-to-End Sample](./src/AssistantsAPI_Http_Demo.rest) illustrates how to use the Assistants API for a fictional request to suggest preferred restaurants in a given City for a specific person. All through plain vanilla HTTP requests without relying on a specific SDK.
 
 ### Step 1: File Upload & Assistants Creation
