@@ -1,0 +1,126 @@
+@ENDPOINT = <<Your Azure OpenAI Endpoint>>
+@APIKEY = <<Your Azure OpenAI Key>>
+@MODELDEPLOYMENT = <<Your Azure OpenAI Model Deployment Name>>
+
+### STEP 1: List existing files, Upload a file and create an Assistant
+### List Files
+# @name listFiles
+GET {{ENDPOINT}}/openai/files?api-version=2024-02-15-preview
+api-key: {{APIKEY}}
+
+### Upload File
+# @name uploadFile
+POST {{ENDPOINT}}/openai/files?api-version=2024-02-15-preview 
+api-key: {{APIKEY}}
+Content-Type: multipart/form-data; boundary=bfa342aef6dccc8937105ae50af6b7ca
+
+--bfa342aef6dccc8937105ae50af6b7ca
+Content-Disposition: form-data; name="purpose"
+
+assistants
+--bfa342aef6dccc8937105ae50af6b7ca
+Content-Disposition: form-data; name="file"; filename="GroundingDataAPI.txt"
+Content-Type: text/plain
+
+When Robert is in Berlin he likes Fine Dining with a View! Berlin offers a diverse culinary scene with various fine dining options. Here's a list of fine dining cuisines you might enjoy during your weekend trip: A list with fantasy restaurant names for different cuisines in Berlin: 1. **German Cuisine**: - Sample traditional German dishes with a modern twist at fine dining establishments like "Elysium's Hearth" or "Aurora's Feast Hall." - Try classic dishes such as Wiener Schnitzel, Sauerbraten, or Rouladen prepared with a refined touch. 10. **Fine Dining with a View**: - Enjoy panoramic views of Berlin while dining at Michelin-starred restaurants like "Skyward Summit" or "Stellar Heights," where exquisite cuisine is complemented by stunning city vistas. Feel free to use these fantasy names as inspiration for your culinary adventures in Berlin!
+--bfa342aef6dccc8937105ae50af6b7ca--
+
+### List Assistants
+GET {{ENDPOINT}}/openai/assistants?api-version=2024-02-15-preview
+api-key: {{APIKEY}}
+
+### Create Assistant
+# @name createAssistant
+@fileId = {{uploadFile.response.body.id}}
+POST {{ENDPOINT}}/openai/assistants?api-version=2024-02-15-preview HTTP/1.1
+api-key: {{APIKEY}}
+Content-Type: application/json
+
+{
+  "instructions": "You are an assistant which helps finding people's favorite restaurants in different cities. Don't ask for permission if you need to access information in uploaded files. Just use all information which is provided in uploaded files.",
+  "name": "CuisineAssistantAPI",
+  "tools": [{"type": "code_interpreter"}],
+  "file_ids": ["{{fileId}}"],
+  "model": "{{MODELDEPLOYMENT}}"
+}
+
+### STEP 2: Create Thread and add User Message to the Thread
+### Create Thread
+# @name createThread
+POST {{ENDPOINT}}/openai/threads?api-version=2024-02-15-preview HTTP/1.1
+api-key: {{APIKEY}}
+Content-Type: application/json
+
+{}
+
+### Add message to the thread
+# @name addMessage
+@threadId = {{createThread.response.body.id}}
+POST {{ENDPOINT}}/openai/threads/{{threadId}}/messages?api-version=2024-02-15-preview HTTP/1.1
+Content-Type: application/json
+api-key: {{APIKEY}}
+
+{
+    "role": "user",
+    "content": "What is Robert's favorite restaurant when he's in Berlin?"
+}
+
+
+
+### STEP 3: Run Thread and retrieve status
+### Run Thread
+# @name runtThread
+
+@threadId = {{createThread.response.body.id}}
+
+POST {{ENDPOINT}}/openai/threads/{{threadId}}/runs?api-version=2024-02-15-preview HTTP/1. 
+api-key: {{APIKEY}}
+Content-Type: application/json
+
+{
+    "assistant_id": "{{assistantId}}"
+}
+
+### List runs
+
+GET {{ENDPOINT}}/openai/threads/{{threadId}}/runs?api-version=2024-02-15-preview
+api-key: {{APIKEY}}
+
+
+### Retrieve Run Status
+# @name getRunStatus
+@runId = {{runtThread.response.body.id}}
+GET {{ENDPOINT}}/openai/threads/{{threadId}}/runs/{{runId}}?api-version=2024-02-15-preview
+api-key: {{APIKEY}}
+
+### List Run Steps
+GET {{ENDPOINT}}/openai/threads/{{threadId}}/runs/{{runId}}/steps?api-version=2024-02-15-preview
+api-key: {{APIKEY}}
+
+
+### STEP 4: Retrieve assistant message/response from Thread
+### Retrieve Assistant response
+GET {{ENDPOINT}}/openai/threads/{{threadId}}/messages?api-version=2024-02-15-preview HTTP/1.1
+Content-Type: application/json
+api-key: {{APIKEY}}
+
+
+
+### STEP 5: House Keeping
+### Delete Thread
+@threadId = {{createThread.response.body.id}}
+
+DELETE {{ENDPOINT}}/openai/threads/{{threadId}}?api-version=2024-02-15-preview
+api-key: {{APIKEY}}
+
+### Delete File
+@fileId = {{uploadFile.response.body.id}}
+DELETE {{ENDPOINT}}/openai/files/{{fileId}}?api-version=2024-02-15-preview 
+api-key: {{APIKEY}}
+
+### Delete Assistant
+@assistantId = {{createAssistant.response.body.id}}
+
+DELETE {{ENDPOINT}}/openai/assistants/{{assistantId}}?api-version=2024-02-15-preview
+api-key: {{APIKEY}}
+
